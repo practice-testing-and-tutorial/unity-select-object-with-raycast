@@ -16,22 +16,29 @@ public class SelectionController : MonoBehaviour
     [SerializeField]
     private Material _selectedMaterial;
 
-    private Transform _selectedTransform;
+    private Material _currentMaterial;
+
+    private Transform _lastSelectedTransform;
     
     private void Update()
     {
-        if (IsSelecting())
+        var currentSelected = MouseSelection();
+
+        _currentMaterial = currentSelected ? _selectedMaterial : _defaultMaterial;
+
+        if (currentSelected)
         {
-            Deselect();
+            _lastSelectedTransform = currentSelected;
+
+            AssignMaterial(currentSelected, _currentMaterial);
+
             return;
         }
 
-        MouseSelection();
-
-        Select();
+        AssignMaterial(_lastSelectedTransform, _currentMaterial);
     }
 
-    private void MouseSelection()
+    private Transform MouseSelection()
     {
         var ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
 
@@ -39,41 +46,23 @@ public class SelectionController : MonoBehaviour
         {
             if (raycastHit.transform.gameObject.CompareTag(_tagToCheck))
             {
-                _selectedTransform = raycastHit.transform;
+                return raycastHit.transform;
             }
         }
+
+        return null;
     }
 
-    private void Deselect()
+    private void AssignMaterial(Transform target, Material material)
     {
-        if (_selectedTransform)
+        if (target)
         {
-            var selectionRenderer = _selectedTransform.GetComponent<Renderer>();
+            var selectionRenderer = target.GetComponent<Renderer>();
 
-            if (selectionRenderer)
+            if (selectionRenderer && selectionRenderer.material != material)
             {
-                selectionRenderer.material = _defaultMaterial;
-
-                _selectedTransform = null;
+                selectionRenderer.material = material;
             }
         }
-    }
-
-    private void Select()
-    {
-        if (_selectedTransform)
-        {
-            var selectionRenderer = _selectedTransform.GetComponent<Renderer>();
-
-            if (selectionRenderer)
-            {
-                selectionRenderer.material = _selectedMaterial;
-            }
-        }
-    }
-
-    private bool IsSelecting()
-    {
-        return _selectedTransform != null;
     }
 }
